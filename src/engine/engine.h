@@ -2,6 +2,7 @@
 
 #include <ATen/core/TensorBody.h>
 
+#include <sstream>
 #include <memory>
 #include <torch/csrc/distributed/c10d/Backend.hpp>
 
