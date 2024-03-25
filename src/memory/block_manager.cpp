@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <iostream>
 
 #include "block_allocator.h"
 #include "common/metrics.h"
