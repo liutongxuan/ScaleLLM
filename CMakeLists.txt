@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
-option(USE_CCACHE "Attempt using CCache to wrap the compilation" OFF)
+option(USE_CCACHE "Attempt using CCache to wrap the compilation" ON)
 option(ENABLE_CXX11_ABI "Use the new C++-11 ABI, which is not backwards compatible." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
