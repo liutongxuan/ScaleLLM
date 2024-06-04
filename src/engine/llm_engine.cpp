@@ -16,27 +16,6 @@
 
 DEFINE_COUNTER(prepare_input_latency_seconds,
                "Latency of preparing input in seconds");
-static constexpr int64_t GB = int64_t(1024) * 1024 * 1024;
-
-DEFINE_int32(block_size, 256, "slots per block, value must be multiple of 256");
-DEFINE_int64(max_cache_size, 25 * GB, "max cache size in bytes, default 25GB");
-DEFINE_double(max_memory_utilization,
-              0.9,
-              "maximum memory utilization allowed, default 0.9");
-DEFINE_bool(enable_cudagraph,
-            false,
-            "Enable CUDAGraph to optimize model execution.");
-
-// following two parameters are used for profiling and warmup the engine.
-// the profiling result would be used to determine kv cache size.
-DEFINE_int64(max_num_tokens_per_batch,
-             1024,
-             "Maximum number of tokens per batch for profiling.");
-DEFINE_int64(max_num_seqs_per_batch,
-             32,
-             "Maximum number of sequences per batch for profiling.");
-
-DECLARE_bool(disable_custom_kernels);
 
 namespace llm {
 namespace {
