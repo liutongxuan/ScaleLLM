@@ -5,7 +5,7 @@ try:
 except ImportError:
     pass
 
-from scalellm._C import (LLMHandler, LogProb, LogProbData, Message, Priority,
+from scalellm._C import (VLMHandler, LLMHandler, LogProb, LogProbData, Message, Priority,
                          RequestOutput, SamplingParams, SequenceOutput, Status,
                          StatusCode, Usage, get_metrics)
 from scalellm.errors import ValidationError
@@ -29,5 +29,6 @@ __all__ = [
     "StatusCode",
     "Usage",
     "LLMHandler",
+    "VLMHandler",
     "get_metrics",
 ]
