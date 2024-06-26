@@ -328,9 +328,6 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
     return nullptr;
   }
 
-  // encode the image
-
-  // encode the prompt
   Timer timer;
   std::vector<int> prompt_tokens;
   if (!tokenizers_[tid]->encode(prompt, &prompt_tokens)) {
@@ -341,6 +338,11 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
   }
   COUNTER_ADD(tokenization_latency_seconds, timer.elapsed_seconds());
 
+  // encode the image, encode & projector
+  auto vision_engine = dynamic_cast<VisionEngine*>(engine_);
+  auto input_embedding = vision_engine->vision_encode(image, prompt_tokens);
+
+  // TODO: prompt_token is not enough, need to add image token size
   const int64_t max_context_len = model_args_.max_position_embeddings();
   if (prompt_tokens.size() >= max_context_len) {
     LOG(ERROR) << "Prompt is too long: " << prompt_tokens.size();
@@ -355,12 +357,13 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
   }
 
   // allocate enough capacity for prompt tokens, max tokens, and speculative
-  // tokens
+  // tokens, TODO: add image token size as well.
   const size_t capacity = prompt_tokens.size() + max_tokens +
                           options_.num_speculative_tokens() + /*bouns_token*/ 1;
   const size_t best_of = sp.best_of.value_or(sp.n);
   auto request = std::make_unique<Request>(std::move(prompt),
                                            std::move(prompt_tokens),
+                                           std::move(input_embedding),
                                            capacity,
                                            sp.n,
                                            best_of,

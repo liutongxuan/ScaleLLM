@@ -49,6 +49,8 @@ void Batch::add(Sequence* sequence, uint32_t token_budget) {
   sequences_.push_back(sequence);
   token_budgets_.push_back(token_budget);
   budget_used_.push_back(0);
+
+  input_embedding_ = sequence->get_input_embedding();
 }
 
 void Batch::add(const std::vector<Sequence*>& sequences) {
