@@ -49,7 +49,7 @@ void init_vlm_handler(py::module_& m) {
           .def("reset",
                &VLMHandler::reset,
                py::call_guard<py::gil_scoped_release>())
-          .def("__repr__", [](const LLMHandler& self) {
+          .def("__repr__", [](const VLMHandler& self) {
             return "VLMHandler({})"_s.format(self.options());
           });
 
@@ -84,7 +84,7 @@ void init_vlm_handler(py::module_& m) {
                      &VLMHandler::Options::image_input_shape_)
       .def_readwrite("image_feature_size",
                      &VLMHandler::Options::image_feature_size_)
-      .def("__repr__", [](const LLMHandler::Options& self) {
+      .def("__repr__", [](const VLMHandler::Options& self) {
         return "Options(model_path={}, devices={}, "
                "block_size={}, max_cache_size={}, "
                "max_memory_utilization={}, enable_prefix_cache={}, "

@@ -13,6 +13,7 @@
 #include "common/scope_guard.h"
 #include "common/timer.h"
 #include "engine/utils.h"
+#include "engine/vlm_engine.h"
 #include "models/model_args.h"
 #include "models/model_registry.h"
 #include "request/output.h"
@@ -212,6 +213,7 @@ std::future<bool> VLMHandler::schedule_async(torch::Tensor image,
   // add one pending request
   scheduler_->inc_pending_requests(1);
   return schedule(
+      std::move(image),
       std::move(prompt),
       std::move(sp),
       priority,
@@ -328,9 +330,6 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
     return nullptr;
   }
 
-  // encode the image
-
-  // encode the prompt
   Timer timer;
   std::vector<int> prompt_tokens;
   if (!tokenizers_[tid]->encode(prompt, &prompt_tokens)) {
@@ -341,6 +340,11 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
   }
   COUNTER_ADD(tokenization_latency_seconds, timer.elapsed_seconds());
 
+  // encode the image, encode & projector
+  auto vision_engine = dynamic_cast<VisionEngine*>(engine_.get());
+  auto input_embedding = vision_engine->vision_encode(image, torch::tensor(prompt_tokens, torch::kInt));
+
+  // TODO: prompt_token is not enough, need to add image token size
   const int64_t max_context_len = model_args_.max_position_embeddings();
   if (prompt_tokens.size() >= max_context_len) {
     LOG(ERROR) << "Prompt is too long: " << prompt_tokens.size();
@@ -355,12 +359,12 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
   }
 
   // allocate enough capacity for prompt tokens, max tokens, and speculative
-  // tokens
-  const size_t capacity = prompt_tokens.size() + max_tokens +
-                          options_.num_speculative_tokens() + /*bouns_token*/ 1;
+  // tokens, TODO: add image token size as well.
+  const size_t capacity = prompt_tokens.size() + max_tokens + 1;
   const size_t best_of = sp.best_of.value_or(sp.n);
   auto request = std::make_unique<Request>(std::move(prompt),
                                            std::move(prompt_tokens),
+                                           std::move(input_embedding),
                                            capacity,
                                            sp.n,
                                            best_of,
@@ -386,8 +390,7 @@ std::unique_ptr<Request> VLMHandler::create_request(size_t tid,
   // stopping criteria
   auto& stopping_criteria = request->stopping_criteria;
   stopping_criteria.max_tokens = max_tokens;
-  stopping_criteria.max_context_len =
-      max_context_len - options_.num_speculative_tokens();
+  stopping_criteria.max_context_len = max_context_len;
   stopping_criteria.ignore_eos = sp.ignore_eos;
   stopping_criteria.eos_token_id = model_args_.eos_token_id();
 
