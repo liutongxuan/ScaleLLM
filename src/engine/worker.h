@@ -15,13 +15,13 @@
 
 namespace llm {
 
-class Worker final {
+class Worker {
  public:
   Worker(const ParallelArgs& parallel_args,
          const torch::Device& device,
          const ModelRunner::Options& runner_options);
 
-  ~Worker() = default;
+  virtual ~Worker() = default;
 
   // initialize model, cache manager. blocking call
   bool init_model(torch::ScalarType dtype,
@@ -72,6 +72,10 @@ class Worker final {
 
   const torch::Device& device() const { return device_; }
 
+ protected:
+  // causal LM model
+  std::unique_ptr<CausalLM> model_;
+
  private:
   // working thread
   ThreadPool threadpool_;
@@ -90,9 +94,6 @@ class Worker final {
 
   // kv caches
   std::vector<llm::KVCache> kv_caches_;
-
-  // causal LM model
-  std::unique_ptr<CausalLM> model_;
 
   // runner options
   ModelRunner::Options runner_options_;
